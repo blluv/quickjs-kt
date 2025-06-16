@@ -69,6 +69,11 @@ expect class QuickJs {
     var maxStackSize: Long
 
     /**
+     * Set JavaScript Execution Timeout.
+     */
+    var executionTimeout: Long
+
+    /**
      * The memory usage of the js runtime.
      */
     val memoryUsage: MemoryUsage

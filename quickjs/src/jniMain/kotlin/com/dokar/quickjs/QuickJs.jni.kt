@@ -186,6 +186,13 @@ actual class QuickJs private constructor(
             setMaxStackSize(runtime, globals, value)
         }
 
+    actual var executionTimeout: Long = 0L
+        set(value) {
+            ensureNotClosed()
+            field = value
+            setExecutionTimeout(runtime, globals, value)
+        }
+
     actual val memoryUsage: MemoryUsage
         get() {
             ensureNotClosed()
@@ -567,6 +574,9 @@ actual class QuickJs private constructor(
 
     @Throws(QuickJsException::class)
     private external fun setMaxStackSize(runtime: Long, globals: Long, byteCount: Long)
+
+    @Throws(QuickJsException::class)
+    private external fun setExecutionTimeout(runtime: Long, globals: Long, timeoutMs: Long)
 
     @Throws(QuickJsException::class)
     private external fun getMemoryUsage(runtime: Long, globals: Long): MemoryUsage

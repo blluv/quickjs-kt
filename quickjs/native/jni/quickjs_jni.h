@@ -1,6 +1,7 @@
 #ifndef QJS_KT_JNI_H
 #define QJS_KT_JNI_H
 
+#include <stdint.h>
 #include <pthread.h>
 #include "cvector.h"
 #include "quickjs.h"
@@ -35,6 +36,10 @@ typedef struct {
      * Scopes with a JS_UpdateStackTop() call are required to be locked.
      */
     pthread_mutex_t js_mutex;
+    /**
+     * Maximum allowed JavaScript execution time in milliseconds.
+     */
+    uint64_t timeout_ms;
 } Globals;
 
 #endif //QJS_KT_JNI_H

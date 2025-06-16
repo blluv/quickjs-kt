@@ -12,6 +12,7 @@
 #include "js_value_util.h"
 #include "quickjs_version.h"
 #include "promise_rejection_handler.h"
+#include "timeout_interrupt_handler.h"
 
 JSRuntime *runtime_from_ptr(JNIEnv *env, jlong ptr) {
     if (ptr == 0) {
@@ -54,6 +55,7 @@ JNIEXPORT jlong JNICALL Java_com_dokar_quickjs_QuickJs_initGlobals(JNIEnv *env,
     globals->global_object_refs = NULL;
     globals->created_js_functions = NULL;
     globals->evaluate_result_promise = NULL;
+    globals->timeout_ms = 0;
 
     pthread_mutex_init(&globals->js_mutex, NULL);
 
@@ -309,6 +311,17 @@ Java_com_dokar_quickjs_QuickJs_setMaxStackSize(JNIEnv *env, jobject this, jlong 
 }
 
 /**
+ * Set execution timeout.
+ */
+JNIEXPORT void JNICALL
+Java_com_dokar_quickjs_QuickJs_setExecutionTimeout(JNIEnv *env, jobject this, jlong runtime_ptr,
+                                               jlong globals_ptr,
+                                               jlong timeout_ms) {
+    Globals *globals = globals_from_ptr(env, globals_ptr);
+    globals->timeout_ms = timeout_ms;
+}
+
+/**
  * Get the runtime memory usage.
  */
 JNIEXPORT jobject JNICALL
@@ -428,8 +441,20 @@ jobject eval(JNIEnv *env, jlong context_ptr,
     // errors may occur.
     JS_UpdateStackTop(JS_GetRuntime(context));
 
+    // Set Timeout Interrupt Handler
+    uint64_t timeout_ms = globals->timeout_ms;
+    if (timeout_ms != 0) {
+        uint64_t end_timestamp = get_timestamp_ms() + timeout_ms;
+        JS_SetInterruptHandler(JS_GetRuntime(context), timeout_interrupt_handler, &end_timestamp);
+    }
+
     // Run code
     JSValue value = JS_Eval(context, code, strlen(code), filename, eval_flags);
+
+    // Clear Timeout Interrupt Handler
+    if (timeout_ms != 0) {
+        JS_SetInterruptHandler(JS_GetRuntime(context), NULL, NULL);
+    }
 
     // Free strings
     (*env)->ReleaseStringUTFChars(env, jfilename, filename);
@@ -513,8 +538,20 @@ Java_com_dokar_quickjs_QuickJs_evaluateBytecode(JNIEnv *env, jobject this, jlong
         return NULL;
     }
 
+    // Set Timeout Interrupt Handler
+    uint64_t timeout_ms = globals->timeout_ms;
+    if (timeout_ms != 0) {
+        uint64_t end_timestamp = get_timestamp_ms() + timeout_ms;
+        JS_SetInterruptHandler(JS_GetRuntime(context), timeout_interrupt_handler, &end_timestamp);
+    }
+
     // Eval
     JSValue value = JS_EvalFunction(context, bytecode);
+
+    // Clear Timeout Interrupt Handler
+    if (timeout_ms != 0) {
+        JS_SetInterruptHandler(JS_GetRuntime(context), NULL, NULL);
+    }
 
     (*env)->ReleaseByteArrayElements(env, jbuffer, buffer, 0);
 
@@ -594,7 +631,19 @@ Java_com_dokar_quickjs_QuickJs_invokeJsFunction(JNIEnv *env,
         (*env)->DeleteLocalRef(env, element);
     }
 
+    // Set Timeout Interrupt Handler
+    uint64_t timeout_ms = globals->timeout_ms;
+    if (timeout_ms != 0) {
+        uint64_t end_timestamp = get_timestamp_ms() + timeout_ms;
+        JS_SetInterruptHandler(JS_GetRuntime(context), timeout_interrupt_handler, &end_timestamp);
+    }
+
     JSValue result = JS_Call(context, func, JS_NULL, argc, argv);
+
+    // Clear Timeout Interrupt Handler
+    if (timeout_ms != 0) {
+        JS_SetInterruptHandler(JS_GetRuntime(context), NULL, NULL);
+    }
 
     // Free arguments
     for (int i = 0; i < argc; ++i) {
