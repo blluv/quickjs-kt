@@ -122,6 +122,8 @@ private fun ScreenContent(
         val start = System.currentTimeMillis()
         result = runCatching {
             quickJs {
+                executionTimeout = 10
+
                 for (module in codeSnippet.modules) {
                     when (module) {
                         is Module.CodeModule -> addModule(

@@ -115,6 +115,12 @@ actual class QuickJs private constructor(
             JS_SetMaxStackSize(runtime, value.toULong())
         }
 
+    actual var executionTimeout: Long = 0L
+        set(value) {
+            ensureNotClosed()
+            field = value
+        }
+
     actual val memoryUsage: MemoryUsage
         get() {
             ensureNotClosed()

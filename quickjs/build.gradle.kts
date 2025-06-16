@@ -15,14 +15,14 @@ kotlin {
     }
     jvm()
 
-    mingwX64()
-    linuxX64()
-    linuxArm64()
-    macosX64()
+//    mingwX64()
+//    linuxX64()
+//    linuxArm64()
+//    macosX64()
     macosArm64()
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+//    iosX64()
+//    iosArm64()
+//    iosSimulatorArm64()
 
     applyDefaultHierarchyTemplate()
 

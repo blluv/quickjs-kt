@@ -132,14 +132,7 @@ fun Project.applyQuickJsNativeBuildTasks(cmakeFile: File) {
     }
 
     val cinteropTaskSuffixes = listOf(
-        "MingwX64",
-        "LinuxX64",
-        "LinuxArm64",
-        "MacosX64",
         "MacosArm64",
-        "IosX64",
-        "IosArm64",
-        "IosSimulatorArm64",
     )
     for (suffix in cinteropTaskSuffixes) {
         tasks.named("cinteropQuickjs$suffix") {
